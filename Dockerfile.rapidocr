@@ -1,0 +1,41 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# If you have network issues, uncomment below to use Chinese mirrors:
+# RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --fix-missing \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1 \
+    libgomp1 \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv first (separate layer)
+RUN pip install --no-cache-dir uv
+
+# Copy only what's needed for dependency installation (better caching)
+COPY pyproject.toml ./
+
+# Install dependencies from pyproject.toml (only rapidocr extras)
+# Only re-runs when pyproject.toml actually changes (better caching)
+# RapidOCR uses ONNX Runtime for CPU inference which is very fast
+RUN uv pip install --system ".[rapidocr]"
+
+# Pre-download RapidOCR models during build (avoids download on container startup)
+RUN python -c "from rapidocr_onnxruntime import RapidOCR; rapid_ocr = RapidOCR()"
+
+# Copy serving code
+COPY serving/rapidocr/ ./serving/rapidocr/
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["uvicorn", "serving.rapidocr.main:app", "--host", "0.0.0.0", "--port", "8000"]

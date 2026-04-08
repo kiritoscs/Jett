@@ -1,0 +1,21 @@
+{{- if .Values.components.rapidocr.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: rapidocr
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: rapidocr
+    model: rapidocr
+    app.kubernetes.io/part-of: jett
+spec:
+  selector:
+    app: rapidocr
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: {{ .Values.service.type }}
+---
+{{- end }}

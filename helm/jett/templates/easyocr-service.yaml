@@ -1,0 +1,21 @@
+{{- if .Values.components.easyocr.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: easyocr
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: easyocr
+    model: easyocr
+    app.kubernetes.io/part-of: jett
+spec:
+  selector:
+    app: easyocr
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: {{ .Values.service.type }}
+---
+{{- end }}

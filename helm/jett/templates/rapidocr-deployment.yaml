@@ -1,0 +1,56 @@
+{{- if .Values.components.rapidocr.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rapidocr
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: rapidocr
+    component: ocr
+    model: rapidocr
+    app.kubernetes.io/part-of: jett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rapidocr
+  template:
+    metadata:
+      labels:
+        app: rapidocr
+    spec:
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
+{{- end }}
+      containers:
+      - name: rapidocr
+        image: "{{ .Values.imageRegistry }}/{{ .Values.images.rapidocr.repository }}:{{ .Values.images.rapidocr.tag }}"
+        imagePullPolicy: {{ .Values.images.rapidocr.pullPolicy }}
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: {{ .Values.resources.rapidocr.requests.cpu | quote }}
+            memory: {{ .Values.resources.rapidocr.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.resources.rapidocr.limits.cpu | quote }}
+            memory: {{ .Values.resources.rapidocr.limits.memory | quote }}
+{{- with index .Values.resources.rapidocr.limits "nvidia.com/gpu" }}
+            nvidia.com/gpu: {{ . | quote }}
+{{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.modelProbes.rapidocr.livenessInitialDelay }}
+          periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.modelProbes.rapidocr.readinessInitialDelay }}
+          periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+---
+{{- end }}

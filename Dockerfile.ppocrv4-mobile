@@ -1,0 +1,48 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Environment variables for PaddlePaddle stability
+ENV OMP_NUM_THREADS=2
+ENV MKL_NUM_THREADS=2
+ENV CPU_NUM=2
+ENV MKL_DEBUG_CPU_TYPE=5
+ENV KMP_DUPLICATE_LIB_OK=TRUE
+ENV PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+
+# If you have network issues, uncomment below to use Chinese mirrors:
+# RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --fix-missing \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies with fixed versions
+RUN pip install --no-cache-dir \
+    paddlepaddle==2.6.2 \
+    paddleocr==2.8.1 \
+    fastapi \
+    uvicorn \
+    python-multipart \
+    pillow \
+    gunicorn \
+    "numpy<2.0" \
+    "opencv-python-headless>=4.8"
+
+# Note: Model download happens on first request at runtime (avoids build-time crashes)
+
+# Copy serving code
+COPY serving/ppocrv4_mobile/ ./serving/ppocrv4_mobile/
+
+# Expose port
+EXPOSE 8000
+
+# Use gunicorn with --preload to avoid model download issues
+CMD ["gunicorn", "serving.ppocrv4_mobile.main:app", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--preload", "--timeout", "180", "--graceful-timeout", "30"]

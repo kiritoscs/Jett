@@ -1,0 +1,54 @@
+{{- if .Values.components.webui.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webui
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: webui
+    component: ocr
+    app.kubernetes.io/part-of: jett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webui
+  template:
+    metadata:
+      labels:
+        app: webui
+    spec:
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
+{{- end }}
+      containers:
+      - name: webui
+        image: "{{ .Values.imageRegistry }}/{{ .Values.images.webui.repository }}:{{ .Values.images.webui.tag }}"
+        imagePullPolicy: {{ .Values.images.webui.pullPolicy }}
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: {{ .Values.resources.webui.requests.cpu | quote }}
+            memory: {{ .Values.resources.webui.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.resources.webui.limits.cpu | quote }}
+            memory: {{ .Values.resources.webui.limits.memory | quote }}
+{{- with index .Values.resources.webui.limits "nvidia.com/gpu" }}
+            nvidia.com/gpu: {{ . | quote }}
+{{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+---
+{{- end }}

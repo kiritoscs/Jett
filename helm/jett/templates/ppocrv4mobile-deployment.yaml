@@ -1,0 +1,69 @@
+{{- if .Values.components.ppocrv4Mobile.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ppocrv4-mobile
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: ppocrv4-mobile
+    component: ocr
+    model: ppocrv4-mobile
+    app.kubernetes.io/part-of: jett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ppocrv4-mobile
+  template:
+    metadata:
+      labels:
+        app: ppocrv4-mobile
+    spec:
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
+{{- end }}
+      containers:
+      - name: ppocrv4-mobile
+        image: "{{ .Values.imageRegistry }}/{{ .Values.images.ppocrv4Mobile.repository }}:{{ .Values.images.ppocrv4Mobile.tag }}"
+        imagePullPolicy: {{ .Values.images.ppocrv4Mobile.pullPolicy }}
+        ports:
+        - containerPort: 8000
+        env:
+          - name: OMP_NUM_THREADS
+            value: "2"
+          - name: MKL_NUM_THREADS
+            value: "2"
+          - name: CPU_NUM
+            value: "2"
+          - name: MKL_DEBUG_CPU_TYPE
+            value: "5"
+          - name: KMP_DUPLICATE_LIB_OK
+            value: "TRUE"
+          - name: PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK
+            value: "True"
+        resources:
+          requests:
+            cpu: {{ .Values.resources.ppocrv4Mobile.requests.cpu | quote }}
+            memory: {{ .Values.resources.ppocrv4Mobile.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.resources.ppocrv4Mobile.limits.cpu | quote }}
+            memory: {{ .Values.resources.ppocrv4Mobile.limits.memory | quote }}
+{{- with index .Values.resources.ppocrv4Mobile.limits "nvidia.com/gpu" }}
+            nvidia.com/gpu: {{ . | quote }}
+{{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.modelProbes.ppocrv4Mobile.livenessInitialDelay }}
+          periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.modelProbes.ppocrv4Mobile.readinessInitialDelay }}
+          periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+---
+{{- end }}

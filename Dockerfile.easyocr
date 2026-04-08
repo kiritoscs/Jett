@@ -1,0 +1,41 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# If you have network issues, uncomment below to use Chinese mirrors:
+# RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+# Install system dependencies for OpenCV and EasyOCR
+RUN apt-get update \
+    && apt-get install -y --fix-missing \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1 \
+    libgomp1 \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv first (separate layer)
+RUN pip install --no-cache-dir uv
+
+# Copy only what's needed for dependency installation (better caching)
+COPY pyproject.toml ./
+
+# Install dependencies from pyproject.toml (only easyocr extras)
+# Only re-runs when pyproject.toml actually changes (better caching)
+RUN uv pip install --system ".[easyocr]"
+
+# Pre-download EasyOCR model during build (avoids download on container startup)
+# Download the default english+chinese model
+RUN python -c "import easyocr; reader = easyocr.Reader(['ch_sim','en'], download_enabled=True)"
+
+# Copy serving code
+COPY serving/easyocr/ ./serving/easyocr/
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["uvicorn", "serving.easyocr.main:app", "--host", "0.0.0.0", "--port", "8000"]

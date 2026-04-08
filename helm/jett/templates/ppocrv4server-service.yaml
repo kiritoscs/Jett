@@ -1,0 +1,21 @@
+{{- if .Values.components.ppocrv4Server.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: ppocrv4-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: ppocrv4-server
+    model: ppocrv4-server
+    app.kubernetes.io/part-of: jett
+spec:
+  selector:
+    app: ppocrv4-server
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: {{ .Values.service.type }}
+---
+{{- end }}

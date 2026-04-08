@@ -1,0 +1,8 @@
+apiVersion: v2
+name: jett
+description: Multi-model AI services with web UI on Kubernetes - OCR and more
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: jett

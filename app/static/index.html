@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR 文字识别</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>OCR 文字识别</h1>
+            <p>上传图片或PDF文件，选择模型进行文字识别</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="model-select">
+                    <label for="modelSelect">选择 OCR 模型:</label>
+                    <select id="modelSelect">
+                        <option value="">-- 请选择模型 --</option>
+                    </select>
+                </div>
+
+                <div class="file-drop" id="fileDrop">
+                    <div class="file-drop-content">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>拖放文件到此处，或点击选择</p>
+                        <p class="hint">支持 JPG, PNG, GIF, BMP, PDF 文件</p>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*,.pdf" hidden>
+                </div>
+
+                <div class="preview-area" id="previewArea" style="display: none;">
+                    <h3>预览</h3>
+                    <div id="previewContent"></div>
+                </div>
+
+                <div class="actions">
+                    <button id="clearBtn" style="display: none;">清空</button>
+                    <button id="ocrBtn" disabled>开始识别</button>
+                </div>
+            </section>
+
+            <section class="result-section" id="resultSection" style="display: none;">
+                <h2>识别结果</h2>
+                <div class="result-meta">
+                    <span>使用模型: <strong id="usedModel"></strong></span>
+                    <span>处理时间: <strong id="processingTime"></strong></span>
+                </div>
+                <div class="result-content">
+                    <pre id="ocrResult"></pre>
+                </div>
+                <div class="result-actions">
+                    <button id="copyBtn">复制结果</button>
+                </div>
+            </section>
+
+            <section class="loading-section" id="loadingSection" style="display: none;">
+                <div class="spinner"></div>
+                <p>正在处理，请稍候...</p>
+            </section>
+        </main>
+
+        <footer>
+            <p>Jinx OCR - Multi-model OCR on Kubernetes</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

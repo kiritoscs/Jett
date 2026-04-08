@@ -1,0 +1,98 @@
+namespace: jett
+imageRegistry: middleware-docker:5001
+images:
+  webui:
+    repository: jett-webui
+    tag: v0.0.1
+    pullPolicy: IfNotPresent
+  ppocrv4Server:
+    repository: jett-ppocrv4-server
+    tag: v0.0.1
+    pullPolicy: IfNotPresent
+  ppocrv4Mobile:
+    repository: jett-ppocrv4-mobile
+    tag: v0.0.1
+    pullPolicy: IfNotPresent
+  easyocr:
+    repository: jett-easyocr
+    tag: v0.0.1
+    pullPolicy: IfNotPresent
+  rapidocr:
+    repository: jett-rapidocr
+    tag: v0.0.1
+    pullPolicy: IfNotPresent
+ingress:
+  enabled: true
+  ingressClassName: kong
+  host: jett.com
+  annotations: {}
+components:
+  webui:
+    enabled: true
+  ppocrv4Server:
+    enabled: true
+  ppocrv4Mobile:
+    enabled: true
+  easyocr:
+    enabled: true
+  rapidocr:
+    enabled: true
+resources:
+  webui:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  ppocrv4Server:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  ppocrv4Mobile:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  easyocr:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  rapidocr:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+probes:
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 30
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+modelProbes:
+  ppocrv4Server:
+    livenessInitialDelay: 60
+    readinessInitialDelay: 30
+  ppocrv4Mobile:
+    livenessInitialDelay: 45
+    readinessInitialDelay: 20
+  easyocr:
+    livenessInitialDelay: 60
+    readinessInitialDelay: 30
+  rapidocr:
+    livenessInitialDelay: 30
+    readinessInitialDelay: 15
+service:
+  type: ClusterIP
+  port: 80

@@ -1,0 +1,56 @@
+{{- if .Values.components.easyocr.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: easyocr
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: easyocr
+    component: ocr
+    model: easyocr
+    app.kubernetes.io/part-of: jett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: easyocr
+  template:
+    metadata:
+      labels:
+        app: easyocr
+    spec:
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
+{{- end }}
+      containers:
+      - name: easyocr
+        image: "{{ .Values.imageRegistry }}/{{ .Values.images.easyocr.repository }}:{{ .Values.images.easyocr.tag }}"
+        imagePullPolicy: {{ .Values.images.easyocr.pullPolicy }}
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: {{ .Values.resources.easyocr.requests.cpu | quote }}
+            memory: {{ .Values.resources.easyocr.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.resources.easyocr.limits.cpu | quote }}
+            memory: {{ .Values.resources.easyocr.limits.memory | quote }}
+{{- with index .Values.resources.easyocr.limits "nvidia.com/gpu" }}
+            nvidia.com/gpu: {{ . | quote }}
+{{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.modelProbes.easyocr.livenessInitialDelay }}
+          periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: {{ .Values.modelProbes.easyocr.readinessInitialDelay }}
+          periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+---
+{{- end }}

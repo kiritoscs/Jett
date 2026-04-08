@@ -1,0 +1,20 @@
+{{- if .Values.components.webui.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: webui
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: webui
+    app.kubernetes.io/part-of: jett
+spec:
+  selector:
+    app: webui
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: {{ .Values.service.type }}
+---
+{{- end }}

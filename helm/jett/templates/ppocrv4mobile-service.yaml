@@ -1,0 +1,21 @@
+{{- if .Values.components.ppocrv4Mobile.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: ppocrv4-mobile
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: ppocrv4-mobile
+    model: ppocrv4-mobile
+    app.kubernetes.io/part-of: jett
+spec:
+  selector:
+    app: ppocrv4-mobile
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: {{ .Values.service.type }}
+---
+{{- end }}

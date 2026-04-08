@@ -1,0 +1,29 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jett-ingress
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: jett
+    component: webui
+  annotations:
+{{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+{{- end }}
+    konghq.com/strip-path: "false"
+    konghq.com/preserve-host: "true"
+spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName | quote }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webui
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}
