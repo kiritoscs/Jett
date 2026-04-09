@@ -34,3 +34,4 @@ class OCRCombinedResponse(BaseModel):
     text: str
     pages: Optional[List[OCRResponse]] = None
     processing_time: float = 0.0
+    raw_result: Optional[Dict[str, Any]] = None

@@ -55,8 +55,13 @@
                 <div class="result-content">
                     <pre id="ocrResult"></pre>
                 </div>
+                <div class="result-content" id="rawResultContainer" style="display: none;">
+                    <h3>原始结果</h3>
+                    <pre id="rawResult"></pre>
+                </div>
                 <div class="result-actions">
                     <button id="copyBtn">复制结果</button>
+                    <button id="viewRawBtn" style="display: none;">查看原始结果</button>
                 </div>
             </section>
 
@@ -67,7 +72,7 @@
         </main>
 
         <footer>
-            <p>Jinx OCR - Multi-model OCR on Kubernetes</p>
+            <p>Jett OCR - Multi-model OCR on Kubernetes</p>
         </footer>
     </div>
 

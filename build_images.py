@@ -7,17 +7,33 @@ Usage:
 Example:
     python build_images.py v0.0.1
     python build_images.py v0.0.5 --service=webui
+
+Environment Variables:
+    REGISTRY: Override default registry (default: middleware-docker:5001)
+    IMAGE_PREFIX: Prefix for image names (default: jett-)
+    REGISTRY_NAMESPACE: Namespace/path in registry (e.g., kiritoscs/jett)
 """
 
 import sys
 import subprocess
 import argparse
+import os
 from pathlib import Path
 
 import yaml
 
 # Configuration
-REGISTRY = "middleware-docker:5001"
+DEFAULT_REGISTRY = "middleware-docker:5001"
+REGISTRY = os.environ.get("REGISTRY", DEFAULT_REGISTRY)
+IMAGE_PREFIX = os.environ.get("IMAGE_PREFIX", "jett-")
+REGISTRY_NAMESPACE = os.environ.get("REGISTRY_NAMESPACE", "")
+
+# Build image name with optional namespace
+def build_image_name(name: str) -> str:
+    if REGISTRY_NAMESPACE:
+        return f"{REGISTRY_NAMESPACE}/{name}"
+    return name
+
 IMAGES = [
     {
         "name": "jett-webui",
@@ -77,7 +93,8 @@ def image_exists(full_name: str) -> bool:
 
 def build_push_image(name: str, dockerfile: str, version: str) -> bool:
     """Check if image exists, build and push if not exists"""
-    full_name = f"{REGISTRY}/{name}:{version}"
+    image_name = build_image_name(name)
+    full_name = f"{REGISTRY}/{image_name}:{version}"
 
     # Check if already exists
     if image_exists(full_name):
@@ -207,9 +224,10 @@ def main():
     # Generate output message
     lines = []
     for img in images_to_process:
-        full_name = f"{REGISTRY}/{img['name']}:{args.version}"
+        image_name = build_image_name(img['name'])
+        full_name = f"{REGISTRY}/{image_name}:{args.version}"
         status = "exists locally, skipped" if image_exists(full_name) else "built & pushed"
-        lines.append(f"  - {img['name']}:{args.version} ({status})")
+        lines.append(f"  - {image_name}:{args.version} ({status})")
 
     if args.service:
         update_note = f"Updated: {VALUES_FILE} - tag for {target_img['name']} set to {args.version}"

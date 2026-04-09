@@ -1,14 +1,10 @@
 """OCR API endpoints"""
 import time
-from typing import List
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
-from PIL import Image
-from pdf2image import convert_from_bytes
-import io
 
 from app.core.client import ocr_client
-from app.models.ocr import OCRCombinedResponse, OCRResponse
+from app.models.ocr import OCRCombinedResponse
 from app.core.config import settings
 
 
@@ -23,7 +19,7 @@ async def list_models():
 
 @router.post("/ocr/{model_id}", response_model=OCRCombinedResponse)
 async def process_ocr(model_id: str, file: UploadFile = File(...)):
-    """Process OCR on uploaded file (image or PDF)"""
+    """Process OCR on uploaded file (image or PDF) - FormData only for simplicity"""
 
     # Check model exists
     service = ocr_client.get_service(model_id)
@@ -42,67 +38,26 @@ async def process_ocr(model_id: str, file: UploadFile = File(...)):
 
     # Get model info
     model_name = service.model_name
-
-    # Process based on file type
     content_type = file.content_type or ""
     filename = file.filename or ""
 
-    if filename.lower().endswith('.pdf') or 'application/pdf' in content_type:
-        # PDF: convert to images and process each page
-        try:
-            images = convert_from_bytes(content, dpi=300)
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to process PDF: {str(e)}")
-
-        page_results: List[OCRResponse] = []
-        all_text = []
-
-        for i, image in enumerate(images):
-            try:
-                text, avg_confidence = await service.process_image(image)
-                page_results.append(OCRResponse(
-                    success=True,
-                    text=text,
-                    processing_time=0.0
-                ))
-                all_text.append(f"--- 第 {i+1} 页 ---\n{text}")
-            except Exception as e:
-                page_results.append(OCRResponse(
-                    success=False,
-                    error=str(e),
-                    processing_time=0.0
-                ))
-
-        combined_text = '\n\n'.join(all_text)
+    try:
+        # Use process_file to send raw file directly to backend service
+        # This avoids memory issues with PDF processing in webui
+        text, avg_confidence, raw_result = await service.process_file(
+            content, filename, content_type
+        )
         processing_time = time.time() - start_time
 
         return OCRCombinedResponse(
             model_id=model_id,
             model_name=model_name,
-            text=combined_text,
-            pages=page_results,
-            processing_time=processing_time
+            text=text,
+            processing_time=processing_time,
+            raw_result=raw_result
         )
-
-    else:
-        # Image: process directly
-        try:
-            image = Image.open(io.BytesIO(content)).convert('RGB')
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to open image: {str(e)}")
-
-        try:
-            text, avg_confidence = await service.process_image(image)
-            processing_time = time.time() - start_time
-
-            return OCRCombinedResponse(
-                model_id=model_id,
-                model_name=model_name,
-                text=text,
-                processing_time=processing_time
-            )
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
 
 
 @router.get("/health")

@@ -23,6 +23,7 @@ RUN apt-get update \
     libgl1 \
     libgomp1 \
     wget \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies with fixed versions
@@ -35,7 +36,8 @@ RUN pip install --no-cache-dir \
     pillow \
     gunicorn \
     "numpy<2.0" \
-    "opencv-python-headless>=4.8"
+    "opencv-python-headless>=4.8" \
+    pdf2image
 
 # Note: Model download happens on first request at runtime (avoids build-time crashes)
 

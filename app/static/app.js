@@ -11,10 +11,14 @@ const resultSection = document.getElementById('resultSection');
 const usedModel = document.getElementById('usedModel');
 const processingTime = document.getElementById('processingTime');
 const ocrResult = document.getElementById('ocrResult');
+const rawResultContainer = document.getElementById('rawResultContainer');
+const rawResult = document.getElementById('rawResult');
 const copyBtn = document.getElementById('copyBtn');
+const viewRawBtn = document.getElementById('viewRawBtn');
 
 // State
 let selectedFile = null;
+let currentRawResult = null;
 
 // Initialize: load available models
 async function loadModels() {
@@ -103,6 +107,8 @@ clearBtn.addEventListener('click', () => {
     previewArea.style.display = 'none';
     clearBtn.style.display = 'none';
     resultSection.style.display = 'none';
+    rawResultContainer.style.display = 'none';
+    currentRawResult = null;
     updateUI();
 });
 
@@ -112,12 +118,14 @@ ocrBtn.addEventListener('click', async () => {
     const startTime = Date.now();
     loadingSection.style.display = 'block';
     resultSection.style.display = 'none';
+    rawResultContainer.style.display = 'none';
     ocrBtn.disabled = true;
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
     try {
+        // Use FormData for all models (backward compatible)
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
         const response = await fetch(`/api/ocr/${modelSelect.value}`, {
             method: 'POST',
             body: formData
@@ -134,15 +142,28 @@ ocrBtn.addEventListener('click', async () => {
         usedModel.textContent = getModelName(modelSelect.value);
         processingTime.textContent = `${time}s`;
 
+        // Extract text and raw result
+        let displayText = '';
+        currentRawResult = result.raw_result;
+
         if (result.text) {
-            ocrResult.textContent = result.text;
+            displayText = result.text;
         } else if (result.pages && Array.isArray(result.pages)) {
             const allText = result.pages.map((p, i) => {
                 return `--- 第 ${i + 1} 页 ---\n${p.text}`;
             }).join('\n\n');
-            ocrResult.textContent = allText;
+            displayText = allText;
         } else {
-            ocrResult.textContent = JSON.stringify(result, null, 2);
+            displayText = JSON.stringify(result, null, 2);
+        }
+
+        ocrResult.textContent = displayText;
+
+        // Show/hide raw result button
+        if (currentRawResult) {
+            viewRawBtn.style.display = 'inline-block';
+        } else {
+            viewRawBtn.style.display = 'none';
         }
 
         resultSection.style.display = 'block';
@@ -152,6 +173,19 @@ ocrBtn.addEventListener('click', async () => {
     } finally {
         loadingSection.style.display = 'none';
         ocrBtn.disabled = false;
+    }
+});
+
+viewRawBtn.addEventListener('click', () => {
+    if (currentRawResult) {
+        if (rawResultContainer.style.display === 'none' || rawResultContainer.style.display === '') {
+            rawResult.textContent = JSON.stringify(currentRawResult, null, 2);
+            rawResultContainer.style.display = 'block';
+            viewRawBtn.textContent = '隐藏原始结果';
+        } else {
+            rawResultContainer.style.display = 'none';
+            viewRawBtn.textContent = '查看原始结果';
+        }
     }
 });
 

@@ -3,23 +3,23 @@ imageRegistry: middleware-docker:5001
 images:
   webui:
     repository: jett-webui
-    tag: v0.0.1
+    tag: v0.1.0
     pullPolicy: IfNotPresent
   ppocrv4Server:
     repository: jett-ppocrv4-server
-    tag: v0.0.1
+    tag: v0.1.0
     pullPolicy: IfNotPresent
   ppocrv4Mobile:
     repository: jett-ppocrv4-mobile
-    tag: v0.0.1
+    tag: v0.1.0
     pullPolicy: IfNotPresent
   easyocr:
     repository: jett-easyocr
-    tag: v0.0.1
+    tag: v0.1.0
     pullPolicy: IfNotPresent
   rapidocr:
     repository: jett-rapidocr
-    tag: v0.0.1
+    tag: v0.1.0
     pullPolicy: IfNotPresent
 ingress:
   enabled: true
@@ -30,11 +30,11 @@ components:
   webui:
     enabled: true
   ppocrv4Server:
-    enabled: true
+    enabled: false
   ppocrv4Mobile:
-    enabled: true
+    enabled: false
   easyocr:
-    enabled: true
+    enabled: false
   rapidocr:
     enabled: true
 resources:

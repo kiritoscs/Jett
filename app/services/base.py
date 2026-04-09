@@ -1,8 +1,6 @@
 """Base OCR service client"""
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional
-from PIL import Image
-import io
+from typing import Tuple, Optional, Dict, Any
 
 
 class BaseOCRService(ABC):
@@ -21,19 +19,11 @@ class BaseOCRService(ABC):
         pass
 
     @abstractmethod
-    async def process_image(self, image: Image.Image) -> Tuple[str, Optional[float]]:
-        """Process an image and return extracted text and confidence"""
+    async def process_file(self, file_bytes: bytes, filename: str, content_type: str) -> Tuple[str, Optional[float], Optional[Dict[str, Any]]]:
+        """Process a raw file (image or PDF) and return extracted text, confidence, and raw result"""
         pass
 
     @abstractmethod
     async def health_check(self) -> bool:
         """Check if the service is healthy"""
         pass
-
-
-def image_to_bytes(image: Image.Image, format: str = "PNG") -> bytes:
-    """Convert PIL Image to bytes"""
-    buf = io.BytesIO()
-    image.save(buf, format=format)
-    buf.seek(0)
-    return buf.getvalue()
