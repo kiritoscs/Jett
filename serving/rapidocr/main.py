@@ -22,7 +22,7 @@ model = None
 class LayoutParsingRequest(BaseModel):
     """Layout parsing request with base64 file"""
     file: str  # base64 encoded
-    filetype: int  # 0 = PDF, 1 = image
+    fileType: int  # 0 = PDF, 1 = image
 
 
 class UnifiedResponse(BaseModel):
@@ -147,12 +147,12 @@ async def layout_parsing(request: LayoutParsingRequest):
         file_content = base64.b64decode(request.file)
 
         # Process based on file type
-        filetype = request.filetype  # 0 = PDF, 1 = image
+        fileType = request.fileType  # 0 = PDF, 1 = image
 
         parsing_results = []
         all_text = []
 
-        if filetype == 0:
+        if fileType == 0:
             # PDF: convert to images and process each page
             try:
                 images = convert_from_bytes(file_content, dpi=300)
@@ -195,7 +195,7 @@ async def layout_parsing(request: LayoutParsingRequest):
                 })
                 all_text.append(f"--- 第 {i+1} 页 ---\n{markdown_text}")
 
-        elif filetype == 1:
+        elif fileType == 1:
             # Image: process directly
             try:
                 img_pil = Image.open(io.BytesIO(file_content)).convert('RGB')
@@ -242,7 +242,7 @@ async def layout_parsing(request: LayoutParsingRequest):
                 logId=log_id,
                 result=None,
                 errorCode=1,
-                errorMsg=f"Invalid filetype: {filetype}. Use 0 for PDF, 1 for image."
+                errorMsg=f"Invalid fileType: {fileType}. Use 0 for PDF, 1 for image."
             )
 
         # Build unified result
@@ -253,7 +253,7 @@ async def layout_parsing(request: LayoutParsingRequest):
             "dataInfo": {
                 "width": parsing_results[0]["prunedResult"]["width"] if parsing_results else 0,
                 "height": parsing_results[0]["prunedResult"]["height"] if parsing_results else 0,
-                "type": "pdf" if filetype == 0 else "image"
+                "type": "pdf" if fileType == 0 else "image"
             }
         }
 
@@ -296,16 +296,16 @@ async def ocr_compat(file: UploadFile = File(...)):
         filename = file.filename or ""
 
         # Determine file type
-        filetype = 1  # default to image
+        fileType = 1  # default to image
         if filename.lower().endswith('.pdf') or (file.content_type and 'application/pdf' in file.content_type):
-            filetype = 0
+            fileType = 0
 
         # Encode to base64 and forward to layout-parsing
         import base64
         b64_content = base64.b64encode(content).decode('utf-8')
 
         # Call layout-parsing logic directly
-        request = LayoutParsingRequest(file=b64_content, filetype=filetype)
+        request = LayoutParsingRequest(file=b64_content, fileType=fileType)
         return await layout_parsing(request)
 
     except Exception as e:

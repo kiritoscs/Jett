@@ -25,16 +25,16 @@ class RapidOCRService(BaseOCRService):
         b64_file = base64.b64encode(file_bytes).decode('utf-8')
 
         # Determine file type
-        filetype = 1  # default to image
+        fileType = 1  # default to image
         if filename.lower().endswith('.pdf') or 'application/pdf' in content_type:
-            filetype = 0
+            fileType = 0
 
         # Send to layout-parsing endpoint
         response = await self.client.post(
             f"{self.endpoint}/layout-parsing",
             json={
                 "file": b64_file,
-                "filetype": filetype
+                "fileType": fileType
             }
         )
         response.raise_for_status()
